@@ -58,6 +58,11 @@ def logistic(x, K, r, x0): return K / (1 + np.exp(-r * (x - x0)))
 popt_log, _ = curve_fit(logistic, years.flatten(), emissions, p0=[600, 0.03, 2050])
 pred_logistic = logistic(years.flatten(), *popt_log)
 
+# Neural Net
+net = Net()
+criterion = nn.MSELoss()
+optimizer = optim.Adam(net.parameters(), lr=0.01)
+
 # -----------------------------
 # 3. AI Model (PyTorch NN)
 # -----------------------------
