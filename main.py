@@ -13,9 +13,28 @@ import torch.optim as optim
 # 1. Load Your Data
 # -----------------------------
 # Replace with your dataset
-global_emissions = pd.read_csv("global_emissions.csv")  # needs 'year' + 'global_gt'
+print("Loading GCB2022v27_MtCO2_flat.csv...")
+
+# Read country-level CO₂ data
+df = pd.read_csv("GCB2022v27_MtCO2_flat.csv")
+
+# Group by year and sum across all countries
+global_emissions = df.groupby("Year", as_index=False)["Total"].sum()
+
+# Convert MtCO₂ → GtCO₂
+global_emissions["global_gt"] = global_emissions["Total"] / 1000
+
+# Keep only needed columns
+global_emissions = global_emissions[["Year", "global_gt"]]
+global_emissions.rename(columns={"Year": "year"}, inplace=True)
+
+# Assign variables for modeling
 years = global_emissions["year"].values.reshape(-1, 1)
 emissions = global_emissions["global_gt"].values
+
+print("Dataset ready! Years:", years.min(), "to", years.max())
+print("Sample:\n", global_emissions.head())
+
 
 # -----------------------------
 # 2. Baseline Models
