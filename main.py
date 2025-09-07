@@ -14,20 +14,12 @@ import torch.optim as optim
 # -----------------------------
 print("Loading GCB2022v27_MtCO2_flat.csv...")
 
-# Read country-level CO₂ data
 df = pd.read_csv("GCB2022v27_MtCO2_flat.csv")
-
-# Group by year and sum across all countries
 global_emissions = df.groupby("Year", as_index=False)["Total"].sum()
-
-# Convert MtCO₂ → GtCO₂
 global_emissions["global_gt"] = global_emissions["Total"] / 1000
-
-# Keep only needed columns
 global_emissions = global_emissions[["Year", "global_gt"]]
 global_emissions.rename(columns={"Year": "year"}, inplace=True)
 
-# Assign variables for modeling
 years = global_emissions["year"].values.reshape(-1, 1)
 emissions = global_emissions["global_gt"].values
 
@@ -37,11 +29,9 @@ print("Sample:\n", global_emissions.head())
 # -----------------------------
 # 2. Baseline Models
 # -----------------------------
-# Linear
 linear_model = LinearRegression().fit(years, emissions)
 pred_linear = linear_model.predict(years)
 
-# Polynomial (Quadratic)
 poly = PolynomialFeatures(degree=2)
 X_poly = poly.fit_transform(years)
 poly_model = LinearRegression().fit(X_poly, emissions)
@@ -57,11 +47,6 @@ pred_exp = exp_func(years_norm, *popt_exp)
 def logistic(x, K, r, x0): return K / (1 + np.exp(-r * (x - x0)))
 popt_log, _ = curve_fit(logistic, years.flatten(), emissions, p0=[600, 0.03, 2050])
 pred_logistic = logistic(years.flatten(), *popt_log)
-
-# Neural Net
-net = Net()
-criterion = nn.MSELoss()
-optimizer = optim.Adam(net.parameters(), lr=0.01)
 
 # -----------------------------
 # 3. AI Model (PyTorch NN)
@@ -148,8 +133,8 @@ dc_model = LinearRegression().fit(dc_proj[["year"]], dc_proj["dc_percent"])
 dc_pred = dc_model.predict(future_years)
 
 global_proj = proj_logistic
-dc_gt = global_proj * dc_pred   # base scenario
-dc_half_gt = global_proj * (dc_pred*0.5)  # slower growth
+dc_gt = global_proj * dc_pred
+dc_half_gt = global_proj * (dc_pred*0.5)
 
 # -----------------------------
 # 8. Plots
