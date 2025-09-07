@@ -143,4 +143,3 @@ plt.plot(future_years, dc_half_gt, label="Data Centers (Half Growth)", linestyle
 plt.title("Global vs. Data Center Emissions Projection")
 plt.xlabel("Year"); plt.ylabel("CO₂ Emissions (Gt/year)")
 plt.legend(); plt.show()
-print("Hello NexHax!")
