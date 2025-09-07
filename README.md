@@ -1,1 +1,1 @@
-# FII-NX1Intl-Judy-Zhu
+# NexHax AI Tool - Judy Zhu
