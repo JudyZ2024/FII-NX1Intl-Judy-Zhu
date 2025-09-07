@@ -9,7 +9,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-
+# -----------------------------
+# 1. Load Global Emissions Data
+# -----------------------------
 print("Loading GCB2022v27_MtCO2_flat.csv...")
 
 # Read country-level CO₂ data
@@ -32,7 +34,10 @@ emissions = global_emissions["global_gt"].values
 print("Dataset ready! Years:", years.min(), "to", years.max())
 print("Sample:\n", global_emissions.head())
 
-
+# -----------------------------
+# 2. Baseline Models
+# -----------------------------
+# Linear
 linear_model = LinearRegression().fit(years, emissions)
 pred_linear = linear_model.predict(years)
 
@@ -42,10 +47,11 @@ X_poly = poly.fit_transform(years)
 poly_model = LinearRegression().fit(X_poly, emissions)
 pred_poly = poly_model.predict(X_poly)
 
-# Exponential
+# Exponential (normalize years to avoid overflow)
 def exp_func(x, a, b): return np.exp(a + b*x)
-popt_exp, _ = curve_fit(exp_func, years.flatten(), emissions)
-pred_exp = exp_func(years.flatten(), *popt_exp)
+years_norm = years.flatten() - years.min()
+popt_exp, _ = curve_fit(exp_func, years_norm, emissions)
+pred_exp = exp_func(years_norm, *popt_exp)
 
 # Logistic
 def logistic(x, K, r, x0): return K / (1 + np.exp(-r * (x - x0)))
@@ -67,14 +73,19 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.fc1, self.fc2, self.fc3 = nn.Linear(1,64), nn.Linear(64,64), nn.Linear(64,1)
     def forward(self, x):
-        x = torch.relu(self.fc1(x)); x = torch.relu(self.fc2(x)); return self.fc3(x)
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        return self.fc3(x)
 
-net, criterion, optimizer = Net(), nn.MSELoss(), optim.Adam(net.parameters(), lr=0.01)
+net = Net()
+criterion = nn.MSELoss()
+optimizer = optim.Adam(net.parameters(), lr=0.01)
 
 for epoch in range(3000):
     optimizer.zero_grad()
     loss = criterion(net(X_tensor), y_tensor)
-    loss.backward(); optimizer.step()
+    loss.backward()
+    optimizer.step()
 
 with torch.no_grad():
     y_pred_nn = net(X_tensor).numpy()
@@ -93,8 +104,9 @@ results = {
     "NeuralNet": rmse(emissions, pred_nn.flatten())
 }
 
-print("RMSE Comparison:")
-print(results)
+print("\nRMSE Comparison:")
+for k,v in results.items():
+    print(f"{k}: {v:.3f}")
 
 # -----------------------------
 # 5. Future Projections (to 2200)
@@ -103,7 +115,7 @@ future_years = np.arange(max(years)+1, 2201).reshape(-1,1)
 
 proj_linear = linear_model.predict(future_years)
 proj_poly = poly_model.predict(poly.transform(future_years))
-proj_exp = exp_func(future_years.flatten(), *popt_exp)
+proj_exp = exp_func(future_years.flatten() - years.min(), *popt_exp)
 proj_logistic = logistic(future_years.flatten(), *popt_log)
 
 with torch.no_grad():
@@ -145,13 +157,19 @@ plt.plot(years, pred_exp, label="Exponential")
 plt.plot(years, pred_logistic, label="Logistic")
 plt.plot(years, pred_nn, label="Neural Net", linestyle="--")
 plt.title("Global CO₂ Emissions Models")
-plt.xlabel("Year"); plt.ylabel("CO₂ Emissions (Gt/year)")
-plt.legend(); plt.show()
+plt.xlabel("Year")
+plt.ylabel("CO₂ Emissions (Gt/year)")
+plt.legend()
+plt.savefig("model_comparison.png", dpi=300)
+plt.show()
 
 plt.figure(figsize=(12,7))
 plt.plot(future_years, global_proj, label="Global Emissions (Logistic)", color="black")
 plt.plot(future_years, dc_gt, label="Data Centers", linestyle="dashed", color="red")
 plt.plot(future_years, dc_half_gt, label="Data Centers (Half Growth)", linestyle="dotdash", color="blue")
 plt.title("Global vs. Data Center Emissions Projection")
-plt.xlabel("Year"); plt.ylabel("CO₂ Emissions (Gt/year)")
-plt.legend(); plt.show()
+plt.xlabel("Year")
+plt.ylabel("CO₂ Emissions (Gt/year)")
+plt.legend()
+plt.savefig("dc_scenario.png", dpi=300)
+plt.show()
