@@ -163,3 +163,4 @@ plt.ylabel("CO₂ Emissions (Gt/year)")
 plt.legend()
 plt.savefig("dc_scenario.png", dpi=300)
 plt.show()
+
