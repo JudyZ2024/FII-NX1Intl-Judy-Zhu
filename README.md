@@ -20,5 +20,6 @@ Why this matters:
 -AI can outperform traditional models and give sharper forecasts, especially since advanced models know their techs more than users do
 -Even small shifts in daily energy habits of a city can lead to huge reductions
 -This connects back to SDG 13 Target 13.2, which calls for integrating climate measures into planning and action
+
 My project shows that AI isn’t just about big futuristic technology that provides life-changing solutions, but for now, it highlights smaller, realistic adjustments in how we use energy, which adds up over time. AI isn't at the point where it can solve our climate problems itself, but using AI efficiently, humans become a key point in giving back what we’ve taken. 
 
